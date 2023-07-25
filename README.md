@@ -1,1 +1,1 @@
-# kratos-ent-example
+# Kratos Ent ORM实例
