@@ -1497,6 +1497,8 @@ github.com/tx7do/kratos-utils/entgo v0.0.0-20231025061804-798ccd50d6fb h1:XfDDv7
 github.com/tx7do/kratos-utils/entgo v0.0.0-20231025061804-798ccd50d6fb/go.mod h1:9FE/T//UNa6zFaN9bSf94j3Ga3VEGJ77sNmMrU8gb5E=
 github.com/tx7do/kratos-utils/entgo v0.0.0-20231025062829-f8eedb020b71 h1:JAHNW0dB60uGu6orh0YVBLRPg6maDQm52eZxKv3jSJg=
 github.com/tx7do/kratos-utils/entgo v0.0.0-20231025062829-f8eedb020b71/go.mod h1:9FE/T//UNa6zFaN9bSf94j3Ga3VEGJ77sNmMrU8gb5E=
+github.com/tx7do/kratos-utils/entgo v0.0.0-20231025063335-8807fc25ca22 h1:T9W6LW7HZh4uOsFV/J4wZMWu62ar6/KBOgM0hiuKBS8=
+github.com/tx7do/kratos-utils/entgo v0.0.0-20231025063335-8807fc25ca22/go.mod h1:9FE/T//UNa6zFaN9bSf94j3Ga3VEGJ77sNmMrU8gb5E=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=

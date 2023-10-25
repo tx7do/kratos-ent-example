@@ -162,7 +162,7 @@ require (
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	github.com/tx7do/kratos-utils/entgo v0.0.0-20231025062829-f8eedb020b71 // indirect
+	github.com/tx7do/kratos-utils/entgo v0.0.0-20231025063335-8807fc25ca22 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	github.com/zclconf/go-cty v1.14.1 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.9 // indirect
