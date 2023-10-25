@@ -21,9 +21,9 @@ import (
 
 // initApp init kratos application.
 func initApp(logger log.Logger, registrar registry.Registrar, bootstrap *conf.Bootstrap) (*kratos.App, func(), error) {
-	client := data.NewEntClient(bootstrap, logger)
-	redisClient := data.NewRedisClient(bootstrap, logger)
-	dataData, cleanup, err := data.NewData(client, redisClient, logger)
+	entClient := data.NewEntClient(bootstrap, logger)
+	client := data.NewRedisClient(bootstrap, logger)
+	dataData, cleanup, err := data.NewData(entClient, client, logger)
 	if err != nil {
 		return nil, nil, err
 	}
