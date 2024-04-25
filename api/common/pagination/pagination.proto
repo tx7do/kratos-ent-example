@@ -4,6 +4,7 @@ package pagination;
 option go_package = "kratos-ent-example/gen/api/go/common/pagination;pagination";
 
 import "google/protobuf/any.proto";
+import "google/protobuf/field_mask.proto";
 import "gnostic/openapi/v3/annotations.proto";
 
 // 排序类型
@@ -35,20 +36,20 @@ message PagingRequest {
     }
   ];
 
-  //AND过滤条件
+  // 与过滤参数
   optional string query = 3 [
     json_name = "query",
     (gnostic.openapi.v3.property) = {
-      description: "AND过滤条件",
+      description: "与过滤参数",
       example: {yaml: "{\"key1\":\"val1\",\"key2\":\"val2\"}"}
     }
   ];
 
-  // OR过滤条件
+  // 或过滤参数
   optional string orQuery = 4 [
     json_name = "or",
     (gnostic.openapi.v3.property) = {
-      description: "OR过滤条件",
+      description: "或过滤参数",
       example: {yaml: "{\"key1\":\"val1\",\"key2\":\"val2\"}"}
     }
   ];
@@ -66,6 +67,12 @@ message PagingRequest {
   optional bool noPaging = 6 [
     json_name = "nopaging",
     (gnostic.openapi.v3.property) = {description: "是否不分页"}
+  ];
+
+  // 字段掩码
+  google.protobuf.FieldMask fieldMask = 7 [
+    json_name = "field_mask",
+    (gnostic.openapi.v3.property) = {description: "字段掩码"}
   ];
 }
 

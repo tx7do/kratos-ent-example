@@ -3,7 +3,7 @@ package data
 import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
-	"github.com/tx7do/kratos-utils/entgo"
+	"github.com/tx7do/go-utils/entgo"
 
 	"kratos-ent-example/app/user/service/internal/data/ent"
 	"kratos-ent-example/gen/api/go/common/conf"
