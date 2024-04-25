@@ -124,15 +124,16 @@ func (r *UserRepo) Create(ctx context.Context, req *v1.CreateUserRequest) (*v1.U
 }
 
 func (r *UserRepo) Update(ctx context.Context, req *v1.UpdateUserRequest) (*v1.User, error) {
-	cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
-	if err != nil {
-		return nil, err
-	}
-
 	builder := r.data.db.Client().User.UpdateOneID(req.Id).
 		SetNillableNickName(req.User.NickName).
-		SetPassword(cryptoPassword).
 		SetUpdateTime(time.Now().UnixMilli())
+
+	if req.User.Password != nil {
+		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+		if err == nil {
+			builder.SetPassword(cryptoPassword)
+		}
+	}
 
 	res, err := builder.Save(ctx)
 	if err != nil {
@@ -143,15 +144,18 @@ func (r *UserRepo) Update(ctx context.Context, req *v1.UpdateUserRequest) (*v1.U
 }
 
 func (r *UserRepo) Upsert(ctx context.Context, req *v1.UpdateUserRequest) error {
-	cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
-	if err != nil {
-		return err
+	builder := r.data.db.Client().User.Create().
+		SetNillableNickName(req.User.NickName).
+		SetCreateTime(time.Now().UnixMilli())
+
+	if req.User.Password != nil {
+		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+		if err == nil {
+			builder.SetPassword(cryptoPassword)
+		}
 	}
 
-	err = r.data.db.Client().User.Create().
-		SetNillableNickName(req.User.NickName).
-		SetPassword(cryptoPassword).
-		SetCreateTime(time.Now().UnixMilli()).
+	builder.
 		OnConflict(
 			sql.ConflictColumns(user.FieldID),
 		).
@@ -160,11 +164,15 @@ func (r *UserRepo) Upsert(ctx context.Context, req *v1.UpdateUserRequest) error 
 				u.SetNickName(req.User.GetNickName())
 			}
 			if req.User.Password != nil {
-				u.SetPassword(cryptoPassword)
+				cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+				if err == nil {
+					u.SetPassword(cryptoPassword)
+				}
 			}
 			u.SetUpdateTime(time.Now().UnixMilli())
-		}).
-		Exec(ctx)
+		})
+
+	err := builder.Exec(ctx)
 	if err != nil {
 		return err
 	}
