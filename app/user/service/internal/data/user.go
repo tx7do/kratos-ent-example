@@ -142,6 +142,36 @@ func (r *UserRepo) Update(ctx context.Context, req *v1.UpdateUserRequest) (*v1.U
 	return r.convertEntToProto(res), err
 }
 
+func (r *UserRepo) Upsert(ctx context.Context, req *v1.UpdateUserRequest) error {
+	cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+	if err != nil {
+		return err
+	}
+
+	err = r.data.db.Client().User.Create().
+		SetNillableNickName(req.User.NickName).
+		SetPassword(cryptoPassword).
+		SetCreateTime(time.Now().UnixMilli()).
+		OnConflict(
+			sql.ConflictColumns(user.FieldID),
+		).
+		Update(func(u *ent.UserUpsert) {
+			if req.User.NickName != nil {
+				u.SetNickName(req.User.GetNickName())
+			}
+			if req.User.Password != nil {
+				u.SetPassword(cryptoPassword)
+			}
+			u.SetUpdateTime(time.Now().UnixMilli())
+		}).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 func (r *UserRepo) Delete(ctx context.Context, req *v1.DeleteUserRequest) (bool, error) {
 	err := r.data.db.Client().User.
 		DeleteOneID(req.GetId()).
