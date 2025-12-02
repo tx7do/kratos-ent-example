@@ -8,15 +8,16 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2/log"
 
-	"kratos-ent-example/app/user/service/internal/data/ent"
-	"kratos-ent-example/app/user/service/internal/data/ent/user"
-
 	"github.com/tx7do/go-utils/copierutil"
 	"github.com/tx7do/go-utils/crypto"
-	entgo "github.com/tx7do/go-utils/entgo/query"
 	"github.com/tx7do/go-utils/mapper"
 
 	pagination "github.com/tx7do/go-curd/api/gen/go/pagination/v1"
+	entCurd "github.com/tx7do/go-curd/entgo"
+
+	"kratos-ent-example/app/user/service/internal/data/ent"
+	"kratos-ent-example/app/user/service/internal/data/ent/predicate"
+	"kratos-ent-example/app/user/service/internal/data/ent/user"
 
 	userV1 "kratos-ent-example/api/gen/go/user/service/v1"
 )
@@ -25,7 +26,12 @@ type UserRepo struct {
 	data *Data
 	log  *log.Helper
 
-	mapper *mapper.CopierMapper[userV1.User, ent.User]
+	mapper     *mapper.CopierMapper[userV1.User, ent.User]
+	repository *entCurd.Repository[
+		ent.UserQuery, ent.UserSelect, ent.UserCreate, ent.UserCreateBulk, ent.UserUpdate, ent.UserUpdateOne, ent.UserDelete,
+		predicate.User,
+		userV1.User, ent.User,
+	]
 }
 
 func NewUserRepo(data *Data, logger log.Logger) *UserRepo {
@@ -35,6 +41,12 @@ func NewUserRepo(data *Data, logger log.Logger) *UserRepo {
 		log:    l,
 		mapper: mapper.NewCopierMapper[userV1.User, ent.User](),
 	}
+
+	repo.repository = entCurd.NewRepository[
+		ent.UserQuery, ent.UserSelect, ent.UserCreate, ent.UserCreateBulk, ent.UserUpdate, ent.UserUpdateOne, ent.UserDelete,
+		predicate.User,
+		userV1.User, ent.User,
+	](repo.mapper)
 
 	repo.init()
 
@@ -47,7 +59,7 @@ func (r *UserRepo) init() {
 }
 
 func (r *UserRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector)) (int, error) {
-	builder := r.data.db.Client().User.Query()
+	builder := r.data.db.Client().Debug().User.Query()
 	if len(whereCond) != 0 {
 		for _, cond := range whereCond {
 			builder = builder.Where(cond)
@@ -57,104 +69,128 @@ func (r *UserRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector))
 }
 
 func (r *UserRepo) List(ctx context.Context, req *pagination.PagingRequest) (*userV1.ListUserResponse, error) {
-	builder := r.data.db.Client().User.Query()
-
-	err, whereSelectors, querySelectors := entgo.BuildQuerySelector(
-		req.GetQuery(), req.GetOrQuery(),
-		int32(req.GetPage()), int32(req.GetPageSize()), req.GetNoPaging(),
-		req.GetOrderBy(), user.FieldCreatedAt,
-		req.GetFieldMask().GetPaths(),
-	)
-	if err != nil {
-		r.log.Errorf("解析条件发生错误[%s]", err.Error())
-		return nil, err
+	if req == nil {
+		return nil, errors.New("request is nil")
 	}
 
-	if querySelectors != nil {
-		builder.Modify(querySelectors...)
-	}
+	builder := r.data.db.Client().Debug().User.Query()
 
-	entities, err := builder.All(ctx)
+	ret, err := r.repository.ListWithPaging(ctx, builder, builder.Clone(), req)
 	if err != nil {
 		return nil, err
 	}
-
-	dtos := make([]*userV1.User, 0, len(entities))
-	for _, entity := range entities {
-		dto := r.mapper.ToDTO(entity)
-		dtos = append(dtos, dto)
-	}
-
-	count, err := r.Count(ctx, whereSelectors)
-	if err != nil {
-		return nil, err
+	if ret == nil {
+		return &userV1.ListUserResponse{Total: 0, Items: nil}, nil
 	}
 
 	return &userV1.ListUserResponse{
-		Total: int32(count),
-		Items: dtos,
+		Total: ret.Total,
+		Items: ret.Items,
 	}, nil
 }
 
 func (r *UserRepo) Get(ctx context.Context, req *userV1.GetUserRequest) (*userV1.User, error) {
-	entity, err := r.data.db.Client().User.Get(ctx, req.GetId())
-	if err != nil && !ent.IsNotFound(err) {
+	if req == nil {
+		return nil, errors.New("request is nil")
+	}
+
+	var whereCond []func(s *sql.Selector)
+	switch req.QueryBy.(type) {
+	case *userV1.GetUserRequest_Id:
+		whereCond = append(whereCond, user.IDEQ(req.GetId()))
+	case *userV1.GetUserRequest_Username:
+		whereCond = append(whereCond, user.UserNameEQ(req.GetUsername()))
+	default:
+		whereCond = append(whereCond, user.IDEQ(req.GetId()))
+	}
+
+	builder := r.data.db.Client().Debug().User.Query()
+	dto, err := r.repository.Get(ctx, builder, whereCond, req.GetViewMask())
+	if err != nil {
 		return nil, err
 	}
 
-	return r.mapper.ToDTO(entity), err
+	return dto, err
 }
 
 func (r *UserRepo) Create(ctx context.Context, req *userV1.CreateUserRequest) (*userV1.User, error) {
-	cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
-	if err != nil {
-		return nil, err
+	if req == nil || req.User == nil {
+		return nil, errors.New("request is nil")
 	}
 
-	entity, err := r.data.db.Client().User.Create().
-		SetNillableUserName(req.User.UserName).
-		SetNillableNickName(req.User.NickName).
-		SetPassword(cryptoPassword).
-		SetCreatedAt(time.Now()).
-		Save(ctx)
-	if err != nil {
-		return nil, err
+	if req.User.Password != nil && req.User.GetPassword() != "" {
+		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+		if err != nil {
+			return nil, err
+		}
+		req.User.Password = &cryptoPassword
 	}
 
-	return r.mapper.ToDTO(entity), err
+	builder := r.data.db.Client().Debug().User.Create()
+	result, err := r.repository.Create(ctx, builder, req.User, nil, func(dto *userV1.User) {
+		builder.
+			SetNillableUserName(req.User.UserName).
+			SetNillableNickName(req.User.NickName).
+			SetCreatedAt(time.Now())
+
+		if req.User.Password != nil {
+			builder.SetPassword(req.User.GetPassword())
+		}
+	})
+
+	return result, err
 }
 
 func (r *UserRepo) Update(ctx context.Context, req *userV1.UpdateUserRequest) (*userV1.User, error) {
-	builder := r.data.db.Client().User.UpdateOneID(req.Id).
-		SetNillableNickName(req.User.NickName).
-		SetUpdatedAt(time.Now())
+	if req == nil || req.User == nil {
+		return nil, errors.New("request is nil")
+	}
 
-	if req.User.Password != nil {
+	if req.User.Password != nil && req.User.GetPassword() != "" {
 		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
-		if err == nil {
-			builder.SetPassword(cryptoPassword)
+		if err != nil {
+			return nil, err
 		}
+		req.User.Password = &cryptoPassword
 	}
 
-	entity, err := builder.Save(ctx)
-	if err != nil {
-		return nil, err
-	}
+	builder := r.data.db.Client().Debug().User.UpdateOneID(req.User.GetId())
+	result, err := r.repository.UpdateOne(ctx, builder, req.User, req.GetUpdateMask(),
+		[]predicate.User{
+			func(s *sql.Selector) {
+				s.Where(sql.EQ(user.FieldID, req.User.GetId()))
+			},
+		},
+		func(dto *userV1.User) {
+			builder.
+				SetNillableNickName(req.User.NickName).
+				SetUpdatedAt(time.Now())
 
-	return r.mapper.ToDTO(entity), nil
+			if req.User.Password != nil {
+				builder.SetPassword(req.User.GetPassword())
+			}
+		},
+	)
+
+	return result, err
 }
 
 func (r *UserRepo) Upsert(ctx context.Context, req *userV1.UpdateUserRequest) error {
-	builder := r.data.db.Client().User.Create().
+	if req == nil || req.User == nil {
+		return errors.New("request is nil")
+	}
+
+	if req.User.Password != nil && req.User.GetPassword() != "" {
+		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+		if err != nil {
+			return err
+		}
+		req.User.Password = &cryptoPassword
+	}
+
+	builder := r.data.db.Client().Debug().User.Create().
 		SetNillableNickName(req.User.NickName).
 		SetCreatedAt(time.Now())
-
-	if req.User.Password != nil {
-		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
-		if err == nil {
-			builder.SetPassword(cryptoPassword)
-		}
-	}
 
 	builder.
 		OnConflict(
@@ -165,10 +201,7 @@ func (r *UserRepo) Upsert(ctx context.Context, req *userV1.UpdateUserRequest) er
 				u.SetNickName(req.User.GetNickName())
 			}
 			if req.User.Password != nil {
-				cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
-				if err == nil {
-					u.SetPassword(cryptoPassword)
-				}
+				u.SetPassword(req.User.GetPassword())
 			}
 			u.SetUpdatedAt(time.Now())
 		})
@@ -182,10 +215,18 @@ func (r *UserRepo) Upsert(ctx context.Context, req *userV1.UpdateUserRequest) er
 }
 
 func (r *UserRepo) Delete(ctx context.Context, req *userV1.DeleteUserRequest) (bool, error) {
-	err := r.data.db.Client().User.
-		DeleteOneID(req.GetId()).
-		Exec(ctx)
-	return err != nil, err
+	if req == nil {
+		return false, errors.New("request is nil")
+	}
+
+	builder := r.data.db.Client().Debug().User.Delete()
+	affected, err := r.repository.Delete(ctx, builder, []predicate.User{
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(user.FieldID, req.GetId()))
+		},
+	})
+
+	return err == nil && affected > 0, err
 }
 
 func (r *UserRepo) SQLDelete(ctx context.Context, req *userV1.DeleteUserRequest) (bool, error) {

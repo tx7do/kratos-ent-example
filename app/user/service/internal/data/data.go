@@ -3,7 +3,7 @@ package data
 import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
-	"github.com/tx7do/go-utils/entgo"
+	"github.com/tx7do/go-curd/entgo"
 
 	"kratos-ent-example/api/gen/go/common/conf"
 	"kratos-ent-example/app/user/service/internal/data/ent"
@@ -29,9 +29,17 @@ func NewData(entClient *entgo.EntClient[*ent.Client], redisClient *redis.Client,
 
 	return d, func() {
 		l.Info("message", "closing the data resources")
-		d.db.Close()
-		if err := d.rdb.Close(); err != nil {
-			l.Error(err)
+
+		if d.db != nil {
+			if err := d.db.Close(); err != nil {
+				l.Error(err)
+			}
+		}
+
+		if d.rdb != nil {
+			if err := d.rdb.Close(); err != nil {
+				l.Error(err)
+			}
 		}
 	}, nil
 }
