@@ -5,8 +5,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/tx7do/go-utils/entgo"
 
+	"kratos-ent-example/api/gen/go/common/conf"
 	"kratos-ent-example/app/user/service/internal/data/ent"
-	"kratos-ent-example/gen/api/go/common/conf"
 	"kratos-ent-example/pkg/bootstrap"
 )
 

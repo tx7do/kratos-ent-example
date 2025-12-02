@@ -7,8 +7,8 @@ import (
 
 	"kratos-ent-example/app/user/service/internal/service"
 
-	"kratos-ent-example/gen/api/go/common/conf"
-	userV1 "kratos-ent-example/gen/api/go/user/service/v1"
+	"kratos-ent-example/api/gen/go/common/conf"
+	userV1 "kratos-ent-example/api/gen/go/user/service/v1"
 
 	"kratos-ent-example/pkg/bootstrap"
 )

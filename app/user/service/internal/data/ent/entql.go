@@ -25,12 +25,12 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		Type: "User",
 		Fields: map[string]*sqlgraph.FieldSpec{
-			user.FieldCreateTime: {Type: field.TypeInt64, Column: user.FieldCreateTime},
-			user.FieldUpdateTime: {Type: field.TypeInt64, Column: user.FieldUpdateTime},
-			user.FieldDeleteTime: {Type: field.TypeInt64, Column: user.FieldDeleteTime},
-			user.FieldUserName:   {Type: field.TypeString, Column: user.FieldUserName},
-			user.FieldNickName:   {Type: field.TypeString, Column: user.FieldNickName},
-			user.FieldPassword:   {Type: field.TypeString, Column: user.FieldPassword},
+			user.FieldCreatedAt: {Type: field.TypeTime, Column: user.FieldCreatedAt},
+			user.FieldUpdatedAt: {Type: field.TypeTime, Column: user.FieldUpdatedAt},
+			user.FieldDeletedAt: {Type: field.TypeTime, Column: user.FieldDeletedAt},
+			user.FieldUserName:  {Type: field.TypeString, Column: user.FieldUserName},
+			user.FieldNickName:  {Type: field.TypeString, Column: user.FieldNickName},
+			user.FieldPassword:  {Type: field.TypeString, Column: user.FieldPassword},
 		},
 	}
 	return graph
@@ -43,13 +43,13 @@ type predicateAdder interface {
 }
 
 // addPredicate implements the predicateAdder interface.
-func (uq *UserQuery) addPredicate(pred func(s *sql.Selector)) {
-	uq.predicates = append(uq.predicates, pred)
+func (_q *UserQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
 }
 
 // Filter returns a Filter implementation to apply filters on the UserQuery builder.
-func (uq *UserQuery) Filter() *UserFilter {
-	return &UserFilter{config: uq.config, predicateAdder: uq}
+func (_q *UserQuery) Filter() *UserFilter {
+	return &UserFilter{config: _q.config, predicateAdder: _q}
 }
 
 // addPredicate implements the predicateAdder interface.
@@ -82,19 +82,19 @@ func (f *UserFilter) WhereID(p entql.Uint32P) {
 	f.Where(p.Field(user.FieldID))
 }
 
-// WhereCreateTime applies the entql int64 predicate on the create_time field.
-func (f *UserFilter) WhereCreateTime(p entql.Int64P) {
-	f.Where(p.Field(user.FieldCreateTime))
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *UserFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(user.FieldCreatedAt))
 }
 
-// WhereUpdateTime applies the entql int64 predicate on the update_time field.
-func (f *UserFilter) WhereUpdateTime(p entql.Int64P) {
-	f.Where(p.Field(user.FieldUpdateTime))
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *UserFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(user.FieldUpdatedAt))
 }
 
-// WhereDeleteTime applies the entql int64 predicate on the delete_time field.
-func (f *UserFilter) WhereDeleteTime(p entql.Int64P) {
-	f.Where(p.Field(user.FieldDeleteTime))
+// WhereDeletedAt applies the entql time.Time predicate on the deleted_at field.
+func (f *UserFilter) WhereDeletedAt(p entql.TimeP) {
+	f.Where(p.Field(user.FieldDeletedAt))
 }
 
 // WhereUserName applies the entql string predicate on the user_name field.

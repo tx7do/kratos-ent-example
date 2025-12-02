@@ -34,6 +34,7 @@ ent:
 
 # generate protobuf api go code
 api:
+	cd api && \
 	buf generate
 
 # generate OpenAPI v3 docs.

@@ -7,45 +7,38 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/tx7do/go-utils/crypto"
-	entgo "github.com/tx7do/go-utils/entgo/query"
-	util "github.com/tx7do/go-utils/timeutil"
 
-	"kratos-ent-example/app/user/service/internal/biz"
 	"kratos-ent-example/app/user/service/internal/data/ent"
 	"kratos-ent-example/app/user/service/internal/data/ent/user"
 
-	"kratos-ent-example/gen/api/go/common/pagination"
-	v1 "kratos-ent-example/gen/api/go/user/service/v1"
-)
+	"github.com/tx7do/go-utils/copierutil"
+	"github.com/tx7do/go-utils/crypto"
+	entgo "github.com/tx7do/go-utils/entgo/query"
+	"github.com/tx7do/go-utils/mapper"
 
-var _ biz.UserRepo = (*UserRepo)(nil)
+	"kratos-ent-example/api/gen/go/common/pagination"
+	userV1 "kratos-ent-example/api/gen/go/user/service/v1"
+)
 
 type UserRepo struct {
 	data *Data
 	log  *log.Helper
+
+	mapper *mapper.CopierMapper[userV1.User, ent.User]
 }
 
-func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
+func NewUserRepo(data *Data, logger log.Logger) *UserRepo {
 	l := log.NewHelper(log.With(logger, "module", "user/repo/user-service"))
 	return &UserRepo{
-		data: data,
-		log:  l,
+		data:   data,
+		log:    l,
+		mapper: mapper.NewCopierMapper[userV1.User, ent.User](),
 	}
 }
 
-func (r *UserRepo) convertEntToProto(in *ent.User) *v1.User {
-	if in == nil {
-		return nil
-	}
-	return &v1.User{
-		Id:         in.ID,
-		UserName:   in.UserName,
-		NickName:   in.NickName,
-		Password:   in.Password,
-		CreateTime: util.UnixMilliToStringPtr(in.CreateTime),
-		UpdateTime: util.UnixMilliToStringPtr(in.UpdateTime),
-	}
+func (r *UserRepo) init() {
+	r.mapper.AppendConverters(copierutil.NewTimeStringConverterPair())
+	r.mapper.AppendConverters(copierutil.NewTimeTimestamppbConverterPair())
 }
 
 func (r *UserRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector)) (int, error) {
@@ -58,13 +51,13 @@ func (r *UserRepo) Count(ctx context.Context, whereCond []func(s *sql.Selector))
 	return builder.Count(ctx)
 }
 
-func (r *UserRepo) List(ctx context.Context, req *pagination.PagingRequest) (*v1.ListUserResponse, error) {
+func (r *UserRepo) List(ctx context.Context, req *pagination.PagingRequest) (*userV1.ListUserResponse, error) {
 	builder := r.data.db.Client().User.Query()
 
 	err, whereSelectors, querySelectors := entgo.BuildQuerySelector(
 		req.GetQuery(), req.GetOrQuery(),
 		req.GetPage(), req.GetPageSize(), req.GetNoPaging(),
-		req.GetOrderBy(), user.FieldCreateTime,
+		req.GetOrderBy(), user.FieldCreatedAt,
 		req.GetFieldMask().GetPaths(),
 	)
 	if err != nil {
@@ -76,15 +69,15 @@ func (r *UserRepo) List(ctx context.Context, req *pagination.PagingRequest) (*v1
 		builder.Modify(querySelectors...)
 	}
 
-	results, err := builder.All(ctx)
+	entities, err := builder.All(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	items := make([]*v1.User, 0, len(results))
-	for _, res := range results {
-		item := r.convertEntToProto(res)
-		items = append(items, item)
+	dtos := make([]*userV1.User, 0, len(entities))
+	for _, entity := range entities {
+		dto := r.mapper.ToDTO(entity)
+		dtos = append(dtos, dto)
 	}
 
 	count, err := r.Count(ctx, whereSelectors)
@@ -92,44 +85,44 @@ func (r *UserRepo) List(ctx context.Context, req *pagination.PagingRequest) (*v1
 		return nil, err
 	}
 
-	return &v1.ListUserResponse{
+	return &userV1.ListUserResponse{
 		Total: int32(count),
-		Items: items,
+		Items: dtos,
 	}, nil
 }
 
-func (r *UserRepo) Get(ctx context.Context, req *v1.GetUserRequest) (*v1.User, error) {
-	res, err := r.data.db.Client().User.Get(ctx, req.GetId())
+func (r *UserRepo) Get(ctx context.Context, req *userV1.GetUserRequest) (*userV1.User, error) {
+	entity, err := r.data.db.Client().User.Get(ctx, req.GetId())
 	if err != nil && !ent.IsNotFound(err) {
 		return nil, err
 	}
 
-	return r.convertEntToProto(res), err
+	return r.mapper.ToDTO(entity), err
 }
 
-func (r *UserRepo) Create(ctx context.Context, req *v1.CreateUserRequest) (*v1.User, error) {
+func (r *UserRepo) Create(ctx context.Context, req *userV1.CreateUserRequest) (*userV1.User, error) {
 	cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := r.data.db.Client().User.Create().
+	entity, err := r.data.db.Client().User.Create().
 		SetNillableUserName(req.User.UserName).
 		SetNillableNickName(req.User.NickName).
 		SetPassword(cryptoPassword).
-		SetCreateTime(time.Now().UnixMilli()).
+		SetCreatedAt(time.Now()).
 		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.convertEntToProto(res), err
+	return r.mapper.ToDTO(entity), err
 }
 
-func (r *UserRepo) Update(ctx context.Context, req *v1.UpdateUserRequest) (*v1.User, error) {
+func (r *UserRepo) Update(ctx context.Context, req *userV1.UpdateUserRequest) (*userV1.User, error) {
 	builder := r.data.db.Client().User.UpdateOneID(req.Id).
 		SetNillableNickName(req.User.NickName).
-		SetUpdateTime(time.Now().UnixMilli())
+		SetUpdatedAt(time.Now())
 
 	if req.User.Password != nil {
 		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
@@ -138,18 +131,18 @@ func (r *UserRepo) Update(ctx context.Context, req *v1.UpdateUserRequest) (*v1.U
 		}
 	}
 
-	res, err := builder.Save(ctx)
+	entity, err := builder.Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.convertEntToProto(res), err
+	return r.mapper.ToDTO(entity), nil
 }
 
-func (r *UserRepo) Upsert(ctx context.Context, req *v1.UpdateUserRequest) error {
+func (r *UserRepo) Upsert(ctx context.Context, req *userV1.UpdateUserRequest) error {
 	builder := r.data.db.Client().User.Create().
 		SetNillableNickName(req.User.NickName).
-		SetCreateTime(time.Now().UnixMilli())
+		SetCreatedAt(time.Now())
 
 	if req.User.Password != nil {
 		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
@@ -172,7 +165,7 @@ func (r *UserRepo) Upsert(ctx context.Context, req *v1.UpdateUserRequest) error 
 					u.SetPassword(cryptoPassword)
 				}
 			}
-			u.SetUpdateTime(time.Now().UnixMilli())
+			u.SetUpdatedAt(time.Now())
 		})
 
 	err := builder.Exec(ctx)
@@ -183,20 +176,20 @@ func (r *UserRepo) Upsert(ctx context.Context, req *v1.UpdateUserRequest) error 
 	return err
 }
 
-func (r *UserRepo) Delete(ctx context.Context, req *v1.DeleteUserRequest) (bool, error) {
+func (r *UserRepo) Delete(ctx context.Context, req *userV1.DeleteUserRequest) (bool, error) {
 	err := r.data.db.Client().User.
 		DeleteOneID(req.GetId()).
 		Exec(ctx)
 	return err != nil, err
 }
 
-func (r *UserRepo) SQLDelete(ctx context.Context, req *v1.DeleteUserRequest) (bool, error) {
+func (r *UserRepo) SQLDelete(ctx context.Context, req *userV1.DeleteUserRequest) (bool, error) {
 	args := []any{req.GetId()}
 	err := r.data.db.Exec(ctx, "DELETE FROM users WHERE id = $1", args, nil)
 	return err != nil, err
 }
 
-func (r *UserRepo) SQLGet(ctx context.Context, req *v1.GetUserRequest) (*v1.User, error) {
+func (r *UserRepo) SQLGet(ctx context.Context, req *userV1.GetUserRequest) (*userV1.User, error) {
 	args := []any{req.GetId()}
 
 	var err error
@@ -210,7 +203,7 @@ func (r *UserRepo) SQLGet(ctx context.Context, req *v1.GetUserRequest) (*v1.User
 		return nil, ent.MaskNotFound(errors.New("cannot found user"))
 	}
 
-	resp := &v1.User{}
+	resp := &userV1.User{}
 	if err = rows.Scan(&resp.UserName, &resp.NickName); err != nil {
 		return nil, err
 	}

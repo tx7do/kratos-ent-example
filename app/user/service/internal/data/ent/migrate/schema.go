@@ -11,10 +11,10 @@ import (
 var (
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUint32, Increment: true, Comment: "id", SchemaType: map[string]string{"mysql": "int", "postgres": "serial"}},
-		{Name: "create_time", Type: field.TypeInt64, Nullable: true, Comment: "创建时间"},
-		{Name: "update_time", Type: field.TypeInt64, Nullable: true, Comment: "更新时间"},
-		{Name: "delete_time", Type: field.TypeInt64, Nullable: true, Comment: "删除时间"},
+		{Name: "id", Type: field.TypeUint32, Increment: true, Comment: "id"},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true, Comment: "创建时间"},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true, Comment: "更新时间"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, Comment: "删除时间"},
 		{Name: "user_name", Type: field.TypeString, Unique: true, Nullable: true, Size: 50, Comment: "用户名"},
 		{Name: "nick_name", Type: field.TypeString, Nullable: true, Size: 128, Comment: "昵称"},
 		{Name: "password", Type: field.TypeString, Nullable: true, Size: 255, Comment: "登陆密码"},
@@ -26,11 +26,6 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 		Indexes: []*schema.Index{
-			{
-				Name:    "user_id",
-				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[0]},
-			},
 			{
 				Name:    "user_id_user_name",
 				Unique:  true,

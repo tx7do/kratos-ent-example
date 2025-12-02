@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/handlers"
 
-	"kratos-ent-example/gen/api/go/common/conf"
+	"kratos-ent-example/api/gen/go/common/conf"
 )
 
 // CreateRestServer 创建REST服务端

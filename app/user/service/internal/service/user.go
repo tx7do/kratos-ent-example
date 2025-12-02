@@ -6,20 +6,20 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"kratos-ent-example/app/user/service/internal/biz"
+	"kratos-ent-example/app/user/service/internal/data"
 
-	"kratos-ent-example/gen/api/go/common/pagination"
-	v1 "kratos-ent-example/gen/api/go/user/service/v1"
+	"kratos-ent-example/api/gen/go/common/pagination"
+	v1 "kratos-ent-example/api/gen/go/user/service/v1"
 )
 
 type UserService struct {
 	v1.UnimplementedUserServiceServer
 
-	uc  *biz.UserUseCase
+	uc  *data.UserRepo
 	log *log.Helper
 }
 
-func NewUserService(logger log.Logger, uc *biz.UserUseCase) *UserService {
+func NewUserService(logger log.Logger, uc *data.UserRepo) *UserService {
 	l := log.NewHelper(log.With(logger, "module", "user/service/user-service"))
 	return &UserService{
 		log: l,
