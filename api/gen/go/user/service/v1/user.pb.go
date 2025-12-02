@@ -8,11 +8,11 @@ package servicev1
 
 import (
 	_ "github.com/google/gnostic/openapiv3"
+	v1 "github.com/tx7do/go-curd/api/gen/go/pagination/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	pagination "kratos-ent-example/api/gen/go/common/pagination"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -431,7 +431,7 @@ var File_user_service_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_service_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x1auser/service/v1/user.proto\x12\x0fuser.service.v1\x1a$gnostic/openapi/v3/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\"common/pagination/pagination.proto\"\xcc\x03\n" +
+	"\x1auser/service/v1/user.proto\x12\x0fuser.service.v1\x1a$gnostic/openapi/v3/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1epagination/v1/pagination.proto\"\xcc\x03\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x1f\n" +
 	"\buserName\x18\x02 \x01(\tH\x00R\buserName\x88\x01\x01\x12\x1f\n" +
@@ -505,7 +505,7 @@ var file_user_service_v1_user_proto_goTypes = []any{
 	(*UpdateUserRequest)(nil),        // 5: user.service.v1.UpdateUserRequest
 	(*DeleteUserRequest)(nil),        // 6: user.service.v1.DeleteUserRequest
 	(*timestamppb.Timestamp)(nil),    // 7: google.protobuf.Timestamp
-	(*pagination.PagingRequest)(nil), // 8: pagination.PagingRequest
+	(*v1.PagingRequest)(nil),         // 8: pagination.PagingRequest
 	(*emptypb.Empty)(nil),            // 9: google.protobuf.Empty
 }
 var file_user_service_v1_user_proto_depIdxs = []int32{

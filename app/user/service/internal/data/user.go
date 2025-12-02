@@ -16,7 +16,8 @@ import (
 	entgo "github.com/tx7do/go-utils/entgo/query"
 	"github.com/tx7do/go-utils/mapper"
 
-	"kratos-ent-example/api/gen/go/common/pagination"
+	pagination "github.com/tx7do/go-curd/api/gen/go/pagination/v1"
+
 	userV1 "kratos-ent-example/api/gen/go/user/service/v1"
 )
 
@@ -29,11 +30,15 @@ type UserRepo struct {
 
 func NewUserRepo(data *Data, logger log.Logger) *UserRepo {
 	l := log.NewHelper(log.With(logger, "module", "user/repo/user-service"))
-	return &UserRepo{
+	repo := &UserRepo{
 		data:   data,
 		log:    l,
 		mapper: mapper.NewCopierMapper[userV1.User, ent.User](),
 	}
+
+	repo.init()
+
+	return repo
 }
 
 func (r *UserRepo) init() {
@@ -56,7 +61,7 @@ func (r *UserRepo) List(ctx context.Context, req *pagination.PagingRequest) (*us
 
 	err, whereSelectors, querySelectors := entgo.BuildQuerySelector(
 		req.GetQuery(), req.GetOrQuery(),
-		req.GetPage(), req.GetPageSize(), req.GetNoPaging(),
+		int32(req.GetPage()), int32(req.GetPageSize()), req.GetNoPaging(),
 		req.GetOrderBy(), user.FieldCreatedAt,
 		req.GetFieldMask().GetPaths(),
 	)

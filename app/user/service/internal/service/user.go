@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"github.com/go-kratos/kratos/v2/log"
+	pagination "github.com/tx7do/go-curd/api/gen/go/pagination/v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"kratos-ent-example/app/user/service/internal/data"
 
-	"kratos-ent-example/api/gen/go/common/pagination"
-	v1 "kratos-ent-example/api/gen/go/user/service/v1"
+	userV1 "kratos-ent-example/api/gen/go/user/service/v1"
 )
 
 type UserService struct {
-	v1.UnimplementedUserServiceServer
+	userV1.UnimplementedUserServiceServer
 
 	uc  *data.UserRepo
 	log *log.Helper
@@ -27,23 +27,23 @@ func NewUserService(logger log.Logger, uc *data.UserRepo) *UserService {
 	}
 }
 
-func (s *UserService) ListUser(ctx context.Context, req *pagination.PagingRequest) (*v1.ListUserResponse, error) {
+func (s *UserService) ListUser(ctx context.Context, req *pagination.PagingRequest) (*userV1.ListUserResponse, error) {
 	return s.uc.List(ctx, req)
 }
 
-func (s *UserService) GetUser(ctx context.Context, req *v1.GetUserRequest) (*v1.User, error) {
+func (s *UserService) GetUser(ctx context.Context, req *userV1.GetUserRequest) (*userV1.User, error) {
 	return s.uc.Get(ctx, req)
 }
 
-func (s *UserService) CreateUser(ctx context.Context, req *v1.CreateUserRequest) (*v1.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, req *userV1.CreateUserRequest) (*userV1.User, error) {
 	return s.uc.Create(ctx, req)
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, req *v1.UpdateUserRequest) (*v1.User, error) {
+func (s *UserService) UpdateUser(ctx context.Context, req *userV1.UpdateUserRequest) (*userV1.User, error) {
 	return s.uc.Update(ctx, req)
 }
 
-func (s *UserService) DeleteUser(ctx context.Context, req *v1.DeleteUserRequest) (*emptypb.Empty, error) {
+func (s *UserService) DeleteUser(ctx context.Context, req *userV1.DeleteUserRequest) (*emptypb.Empty, error) {
 	_, err := s.uc.Delete(ctx, req)
 	if err != nil {
 		return nil, err
