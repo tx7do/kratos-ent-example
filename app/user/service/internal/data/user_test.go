@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/go-kratos/kratos/v2/log"
-	pagination "github.com/tx7do/go-curd/api/gen/go/pagination/v1"
-	"github.com/tx7do/go-curd/entgo"
+	pagination "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	"github.com/tx7do/go-crud/entgo"
 	"github.com/tx7do/go-utils/trans"
 
 	_ "github.com/xiaoqidun/entps"
@@ -45,7 +45,7 @@ func TestUserRepo_CRUD_List_Count(t *testing.T) {
 
 	// 1) Create
 	createReq := &userV1.CreateUserRequest{
-		User: &userV1.User{
+		Data: &userV1.User{
 			UserName: trans.Ptr("alice"),
 			NickName: trans.Ptr("Alice"),
 			Password: trans.Ptr("password123"),
@@ -87,7 +87,7 @@ func TestUserRepo_CRUD_List_Count(t *testing.T) {
 	// 4) Update nickname and password
 	updatedNick := "Alice-Updated"
 	updateReq := &userV1.UpdateUserRequest{
-		User: &userV1.User{
+		Data: &userV1.User{
 			Id:       created.GetId(),
 			NickName: &updatedNick,
 			Password: trans.Ptr("newpass"),

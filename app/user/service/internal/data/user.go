@@ -12,8 +12,8 @@ import (
 	"github.com/tx7do/go-utils/crypto"
 	"github.com/tx7do/go-utils/mapper"
 
-	pagination "github.com/tx7do/go-curd/api/gen/go/pagination/v1"
-	entCurd "github.com/tx7do/go-curd/entgo"
+	pagination "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	entCurd "github.com/tx7do/go-crud/entgo"
 
 	"kratos-ent-example/app/user/service/internal/data/ent"
 	"kratos-ent-example/app/user/service/internal/data/ent/predicate"
@@ -98,8 +98,8 @@ func (r *UserRepo) Get(ctx context.Context, req *userV1.GetUserRequest) (*userV1
 	switch req.QueryBy.(type) {
 	case *userV1.GetUserRequest_Id:
 		whereCond = append(whereCond, user.IDEQ(req.GetId()))
-	case *userV1.GetUserRequest_Username:
-		whereCond = append(whereCond, user.UserNameEQ(req.GetUsername()))
+	case *userV1.GetUserRequest_UserName:
+		whereCond = append(whereCond, user.UserNameEQ(req.GetUserName()))
 	default:
 		whereCond = append(whereCond, user.IDEQ(req.GetId()))
 	}
@@ -114,27 +114,27 @@ func (r *UserRepo) Get(ctx context.Context, req *userV1.GetUserRequest) (*userV1
 }
 
 func (r *UserRepo) Create(ctx context.Context, req *userV1.CreateUserRequest) (*userV1.User, error) {
-	if req == nil || req.User == nil {
+	if req == nil || req.Data == nil {
 		return nil, errors.New("request is nil")
 	}
 
-	if req.User.Password != nil && req.User.GetPassword() != "" {
-		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+	if req.Data.Password != nil && req.Data.GetPassword() != "" {
+		cryptoPassword, err := crypto.HashPassword(req.Data.GetPassword())
 		if err != nil {
 			return nil, err
 		}
-		req.User.Password = &cryptoPassword
+		req.Data.Password = &cryptoPassword
 	}
 
 	builder := r.data.db.Client().Debug().User.Create()
-	result, err := r.repository.Create(ctx, builder, req.User, nil, func(dto *userV1.User) {
+	result, err := r.repository.Create(ctx, builder, req.Data, nil, func(dto *userV1.User) {
 		builder.
-			SetNillableUserName(req.User.UserName).
-			SetNillableNickName(req.User.NickName).
+			SetNillableUserName(req.Data.UserName).
+			SetNillableNickName(req.Data.NickName).
 			SetCreatedAt(time.Now())
 
-		if req.User.Password != nil {
-			builder.SetPassword(req.User.GetPassword())
+		if req.Data.Password != nil {
+			builder.SetPassword(req.Data.GetPassword())
 		}
 	})
 
@@ -142,32 +142,32 @@ func (r *UserRepo) Create(ctx context.Context, req *userV1.CreateUserRequest) (*
 }
 
 func (r *UserRepo) Update(ctx context.Context, req *userV1.UpdateUserRequest) (*userV1.User, error) {
-	if req == nil || req.User == nil {
+	if req == nil || req.Data == nil {
 		return nil, errors.New("request is nil")
 	}
 
-	if req.User.Password != nil && req.User.GetPassword() != "" {
-		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+	if req.Data.Password != nil && req.Data.GetPassword() != "" {
+		cryptoPassword, err := crypto.HashPassword(req.Data.GetPassword())
 		if err != nil {
 			return nil, err
 		}
-		req.User.Password = &cryptoPassword
+		req.Data.Password = &cryptoPassword
 	}
 
-	builder := r.data.db.Client().Debug().User.UpdateOneID(req.User.GetId())
-	result, err := r.repository.UpdateOne(ctx, builder, req.User, req.GetUpdateMask(),
+	builder := r.data.db.Client().Debug().User.UpdateOneID(req.Data.GetId())
+	result, err := r.repository.UpdateOne(ctx, builder, req.Data, req.GetUpdateMask(),
 		[]predicate.User{
 			func(s *sql.Selector) {
-				s.Where(sql.EQ(user.FieldID, req.User.GetId()))
+				s.Where(sql.EQ(user.FieldID, req.Data.GetId()))
 			},
 		},
 		func(dto *userV1.User) {
 			builder.
-				SetNillableNickName(req.User.NickName).
+				SetNillableNickName(req.Data.NickName).
 				SetUpdatedAt(time.Now())
 
-			if req.User.Password != nil {
-				builder.SetPassword(req.User.GetPassword())
+			if req.Data.Password != nil {
+				builder.SetPassword(req.Data.GetPassword())
 			}
 		},
 	)
@@ -176,20 +176,20 @@ func (r *UserRepo) Update(ctx context.Context, req *userV1.UpdateUserRequest) (*
 }
 
 func (r *UserRepo) Upsert(ctx context.Context, req *userV1.UpdateUserRequest) error {
-	if req == nil || req.User == nil {
+	if req == nil || req.Data == nil {
 		return errors.New("request is nil")
 	}
 
-	if req.User.Password != nil && req.User.GetPassword() != "" {
-		cryptoPassword, err := crypto.HashPassword(req.User.GetPassword())
+	if req.Data.Password != nil && req.Data.GetPassword() != "" {
+		cryptoPassword, err := crypto.HashPassword(req.Data.GetPassword())
 		if err != nil {
 			return err
 		}
-		req.User.Password = &cryptoPassword
+		req.Data.Password = &cryptoPassword
 	}
 
 	builder := r.data.db.Client().Debug().User.Create().
-		SetNillableNickName(req.User.NickName).
+		SetNillableNickName(req.Data.NickName).
 		SetCreatedAt(time.Now())
 
 	builder.
@@ -197,11 +197,11 @@ func (r *UserRepo) Upsert(ctx context.Context, req *userV1.UpdateUserRequest) er
 			sql.ConflictColumns(user.FieldID),
 		).
 		Update(func(u *ent.UserUpsert) {
-			if req.User.NickName != nil {
-				u.SetNickName(req.User.GetNickName())
+			if req.Data.NickName != nil {
+				u.SetNickName(req.Data.GetNickName())
 			}
-			if req.User.Password != nil {
-				u.SetPassword(req.User.GetPassword())
+			if req.Data.Password != nil {
+				u.SetPassword(req.Data.GetPassword())
 			}
 			u.SetUpdatedAt(time.Now())
 		})

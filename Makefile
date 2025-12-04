@@ -39,8 +39,8 @@ api:
 
 # generate OpenAPI v3 docs.
 openapi:
-	buf generate --path api/admin/service/v1 --template api/admin/service/v1/buf.openapi.gen.yaml
-	buf generate --path api/front/service/v1 --template api/front/service/v1/buf.openapi.gen.yaml
+	@cd api && \
+	buf generate --template buf.openapi.gen.yaml
 
 # initialize develop environment
 init:
@@ -48,7 +48,7 @@ init:
 	make init;
 
 # build all service applications
-build:
+build: api openapi
 	$(foreach dir, $(dir $(realpath $(SRCS_MK))),\
       cd $(dir);\
       make build;\
