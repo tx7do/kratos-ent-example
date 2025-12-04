@@ -377,10 +377,7 @@ components:
                     type: string
                     description: 字段掩码，其作用为SELECT中的字段，其语法为使用逗号分隔字段名，例如：id,realName,userName。如果为空则选中所有字段，即SELECT *。
                     format: field-mask
-            description: |-
-                ------------------------------
-                 分页通用请求
-                 ------------------------------
+            description: "------------------------------\r\n 分页通用请求\r\n ------------------------------"
         Sorting:
             type: object
             properties:
