@@ -18,7 +18,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.2
 	github.com/spf13/cobra v1.10.2
 	github.com/tx7do/go-crud v0.0.5
-	github.com/tx7do/go-crud/entgo v0.0.10
+	github.com/tx7do/go-crud/entgo v0.0.13
 	github.com/tx7do/go-utils v1.1.34
 	github.com/tx7do/go-utils/copierutil v0.0.6
 	github.com/tx7do/go-utils/entgo v1.1.42

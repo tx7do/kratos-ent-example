@@ -105,7 +105,7 @@ func (r *UserRepo) Get(ctx context.Context, req *userV1.GetUserRequest) (*userV1
 	}
 
 	builder := r.data.db.Client().Debug().User.Query()
-	dto, err := r.repository.Get(ctx, builder, whereCond, req.GetViewMask())
+	dto, err := r.repository.Get(ctx, builder, req.GetViewMask(), whereCond...)
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +156,6 @@ func (r *UserRepo) Update(ctx context.Context, req *userV1.UpdateUserRequest) (*
 
 	builder := r.data.db.Client().Debug().User.UpdateOneID(req.Data.GetId())
 	result, err := r.repository.UpdateOne(ctx, builder, req.Data, req.GetUpdateMask(),
-		[]predicate.User{
-			func(s *sql.Selector) {
-				s.Where(sql.EQ(user.FieldID, req.Data.GetId()))
-			},
-		},
 		func(dto *userV1.User) {
 			builder.
 				SetNillableNickName(req.Data.NickName).
@@ -220,10 +215,8 @@ func (r *UserRepo) Delete(ctx context.Context, req *userV1.DeleteUserRequest) (b
 	}
 
 	builder := r.data.db.Client().Debug().User.Delete()
-	affected, err := r.repository.Delete(ctx, builder, []predicate.User{
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(user.FieldID, req.GetId()))
-		},
+	affected, err := r.repository.Delete(ctx, builder, func(s *sql.Selector) {
+		s.Where(sql.EQ(user.FieldID, req.GetId()))
 	})
 
 	return err == nil && affected > 0, err
